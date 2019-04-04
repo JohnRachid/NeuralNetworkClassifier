@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+import sklearn.model_selection as sk
 
 
 def main():
@@ -19,24 +20,38 @@ def main():
     training_df = pd.read_csv('data/train/optdigits.tra', header=None)
     X_training, y_training = training_df.loc[:, 0:63], training_df.loc[:, 64]
 
+    X_training, X_validation, y_training, y_validation = sk.train_test_split(X_training, #validation data
+                                                        y_training,
+                                                        test_size=0.20,
+                                                        random_state=42)
+
     X_train = X_training.to_numpy().reshape(-1, 8, 8, 1)
     X_test = X_testing.to_numpy().reshape(-1, 8, 8, 1)
+    X_validation = X_validation.to_numpy().reshape(-1, 8, 8, 1)
 
+    y_validation = keras.utils.to_categorical(y_validation, 10)
     y_train = keras.utils.to_categorical(y_training, 10)
     y_test = keras.utils.to_categorical(y_testing, 10)
 
-    # for i in range(9):
-    #     plt.subplot(331+i)
-    #     plt.imshow(X_train.reshape(-1,1,8,8)[i][0])
-    # plt.show()
-    # # print(y_test[1000:1009])
+    print(y_validation.shape)
+    print(X_validation.shape)
 
     print(X_train.shape)
     print(y_train.shape)
-    trainModels(2, 25, 64, 128, X_train, y_train, X_test, y_test)
+
+    print(X_test.shape)
+    print(y_test.shape)
+
+    trainModels(1, 25, 64, 64, 0, .001, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    trainModels(1, 25, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    trainModels(5, 50, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    trainModels(5, 50, 64, 64, 0.1, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    trainModels(5, 50, 64, 64, 0.001, .1, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    trainModels(20, 100, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    trainModels(20, 100, 128, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
 
 
-def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, X_train, y_train, X_test, y_test):
+def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, momentum, learningRate, decay, X_train, y_train, X_test, y_test , x_validation, y_validation):
     # model = tf.keras.Sequential([
     #     # Adds a densely-connected layer with 64 units to the model:
     #     layers.Dense(64, activation='relu', input_shape=(8, 8, 1)),
@@ -48,17 +63,20 @@ def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, X
 
     model = tf.keras.Sequential()
     # Adds a densely-connected layer with 64 units to the model:
-    input_layer = (layers.Dense(64, activation='relu',input_shape =(8,8,1)))
-
-
-    model.add(input_layer)
+    model.add(layers.Dense(64, activation='relu',input_shape =(8,8,1)))
     model.add(layers.Flatten())
-    # Add another:
-    model.add(layers.Dense(64, activation='relu'))
-    # Add a softmax layer with 10 output units:
+
+    for x in range(numHiddenLayers):
+        # Add another:
+        model.add(layers.Dense(numHiddenUnitsPerLayer, activation='relu'))
+
+    # output with softmax activation function
     model.add(layers.Dense(10, activation='softmax'))
 
-    model.compile(optimizer=tf.train.AdamOptimizer(0.001),
+    sgd = tf.keras.optimizers.SGD(
+        lr=learningRate,momentum=momentum, decay=decay)
+
+    model.compile(optimizer=sgd,
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
@@ -71,10 +89,16 @@ def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, X
     # model.compile(optimizer=tf.train.RMSPropOptimizer(0.01),
     #               loss=tf.keras.losses.categorical_crossentropy,
     #               metrics=[tf.keras.metrics.categorical_accuracy])
+    callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=2,)]
+            #,tf.keras.callbacks.ModelCheckpoint(filepath='best_model.h5', monitor='val_loss', save_best_only=True)]
 
-    hist = model.fit(X_train, y_train, batch_size=batchSize, nb_epoch=numEpochs,
-                     validation_data=(X_test, y_test))
-    # scores = model.evaluate(X_test, y_test, verbose=0)
+    hist = model.fit(X_train, y_train, batch_size=batchSize, epochs=numEpochs,verbose=0)
+    scores = model.evaluate(x_validation, y_validation, verbose=1)
+    print(scores)
+
+    print("end of test with ", numHiddenLayers, "hidden layers, ", numHiddenUnitsPerLayer, " hidden units,",
+          numEpochs, " epochs", learningRate, "learning rate", momentum, " momentum rate", scores[0],
+          "loss ", scores[1], "accuracy")
 
 
 if __name__== "__main__":
