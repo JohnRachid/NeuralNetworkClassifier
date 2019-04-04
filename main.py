@@ -42,16 +42,28 @@ def main():
     print(X_test.shape)
     print(y_test.shape)
 
-    trainModels(1, 25, 64, 64, 0, .001, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
-    trainModels(1, 25, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
-    trainModels(5, 50, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
-    trainModels(5, 50, 64, 64, 0.1, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
-    trainModels(5, 50, 64, 64, 0.001, .1, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
-    trainModels(20, 100, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
-    trainModels(20, 100, 128, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation)
+    loss = 'categorical_crossentropy'
+    trainModels(1, 2000, 64, 64, 0, .001, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+    # trainModels(1, 25, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+    # trainModels(5, 50, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+    # trainModels(5, 50, 64, 64, 0.1, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+    # trainModels(5, 50, 64, 64, 0.001, .1, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+    # trainModels(20, 100, 64, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+    # trainModels(20, 100, 128, 64, 0.001, .01, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+
+    loss = 'mean_squared_error'
+    trainModels(1, 25, 256, 64, 0, .001, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+
+    loss = 'categorical_crossentropy'
+    trainModels(1, 25, 256, 64, 0, .001, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'relu')
+
+    trainModels(1, 25, 256, 64, 0, .001, 0.0, X_train, y_train, X_test, y_test,X_validation, y_validation,loss,'tanh')
 
 
-def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, momentum, learningRate, decay, X_train, y_train, X_test, y_test , x_validation, y_validation):
+
+
+
+def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, momentum, learningRate, decay, X_train, y_train, X_test, y_test , x_validation, y_validation, lossFunction, hiddenUnitActivation):
     # model = tf.keras.Sequential([
     #     # Adds a densely-connected layer with 64 units to the model:
     #     layers.Dense(64, activation='relu', input_shape=(8, 8, 1)),
@@ -68,7 +80,7 @@ def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, m
 
     for x in range(numHiddenLayers):
         # Add another:
-        model.add(layers.Dense(numHiddenUnitsPerLayer, activation='relu'))
+        model.add(layers.Dense(numHiddenUnitsPerLayer, activation=hiddenUnitActivation))
 
     # output with softmax activation function
     model.add(layers.Dense(10, activation='softmax'))
@@ -77,19 +89,10 @@ def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, m
         lr=learningRate,momentum=momentum, decay=decay)
 
     model.compile(optimizer=sgd,
-                  loss='categorical_crossentropy',
+                  loss=lossFunction,
                   metrics=['accuracy'])
 
-    # # Configure a model for mean-squared error regression.
-    # model.compile(optimizer=tf.train.AdamOptimizer(0.01),
-    #               loss='mse',       # mean squared error
-    #               metrics=['mae'])  # mean absolute error
-    #
-    # # Configure a model for categorical classification.
-    # model.compile(optimizer=tf.train.RMSPropOptimizer(0.01),
-    #               loss=tf.keras.losses.categorical_crossentropy,
-    #               metrics=[tf.keras.metrics.categorical_accuracy])
-    callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=2,)]
+    callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=2,verbose=1)]
             #,tf.keras.callbacks.ModelCheckpoint(filepath='best_model.h5', monitor='val_loss', save_best_only=True)]
 
     hist = model.fit(X_train, y_train, batch_size=batchSize, epochs=numEpochs,verbose=0)
@@ -97,8 +100,8 @@ def trainModels(numHiddenLayers, numEpochs, numHiddenUnitsPerLayer, batchSize, m
     print(scores)
 
     print("end of test with ", numHiddenLayers, "hidden layers, ", numHiddenUnitsPerLayer, " hidden units,",
-          numEpochs, " epochs", learningRate, "learning rate", momentum, " momentum rate", scores[0],
-          "loss ", scores[1], "accuracy")
+          numEpochs, " epochs", learningRate, "learning rate,", momentum, " momentum rate,", scores[0],
+          "loss, ", scores[1], "accuracy")
 
 
 if __name__== "__main__":
