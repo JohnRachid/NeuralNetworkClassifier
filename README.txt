@@ -24,7 +24,7 @@ This project uses Python 3.6.7 with the following libraries
     scikit-learn	0.20.3	0.20.3 (this is just used to create validation data. This can be done manually)
     tensorflow-gpu	1.13.1	1.13.1 (for convolutional neural network)
 
-
+If you do not have a GPU you may want to comment out any code related to convolutional networks
 
 The full set of experiments took a total of to run using 431.165 seconds a i7-4790k and a GTX 980.
 
