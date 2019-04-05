@@ -22,4 +22,25 @@ This project uses Python 3.6.7 with the following libraries
     seaborn	0.9.0	0.9.0
     tensorflow	1.13.1	1.13.1
     scikit-learn	0.20.3	0.20.3 (this is just used to create validation data. This can be done manually)
+    tensorflow-gpu	1.13.1	1.13.1 (for convolutional neural network)
 
+
+
+The full set of experiments took a total of to run using 431.165 seconds a i7-4790k and a GTX 980.
+
+Instructions for Running
+    Ensure all libraries are installed as listed above.
+
+    Project Structure is as follows:
+    NeuralNetworkClassifier
+        Data
+            test
+                optdigits.tes
+            train
+                examples.csv
+                labels.csv
+                optdigits.tra
+                optdigits-orig.names.txt
+        main.py
+
+    Run main.py
